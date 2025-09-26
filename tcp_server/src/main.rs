@@ -51,6 +51,8 @@ fn run() -> Result<()> {
     }
 
     println!("Gracfully shutting down...");
+
+    // could also do this
     // for stream in listener.incoming() {
     //     let stream = stream?;
     //     println!(
