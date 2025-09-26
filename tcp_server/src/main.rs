@@ -1,6 +1,11 @@
-use std::fs;
 use std::io::{BufRead, BufReader, Result, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use std::time::Duration;
+use std::{fs, thread};
 
 fn main() {
     println!("Hello, world!");
@@ -19,19 +24,42 @@ fn main() {
 }
 
 fn run() -> Result<()> {
+    let shut_down = Arc::new(AtomicBool::new(false));
+    let sd = shut_down.clone();
+    ctrlc::set_handler(move || sd.store(true, Ordering::SeqCst))
+        .expect("failed to install crtlc handler");
+
     //Bind an address + port almost like new() -> How to know which ports to use? And how to error handle?
     let listener = TcpListener::bind("127.0.0.1:7878")?;
+    listener.set_nonblocking(true)?;
 
     //Stream processing
-    for stream in listener.incoming() {
-        let stream = stream?;
-        println!(
-            "Connection established: Cient - {} and Server - {}",
-            stream.peer_addr()?,
-            stream.local_addr()?
-        );
-        handle_connection(stream)?;
+    while !shut_down.load(Ordering::SeqCst) {
+        match listener.accept() {
+            Ok((stream, addr)) => {
+                println!(
+                    "Connection established: Client-{addr} and Server-{}",
+                    stream.local_addr()?
+                );
+                handle_connection(stream)?;
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                thread::sleep(Duration::from_millis(50));
+            }
+            Err(e) => return Err(e),
+        }
     }
+
+    println!("Gracfully shutting down...");
+    // for stream in listener.incoming() {
+    //     let stream = stream?;
+    //     println!(
+    //         "Connection established: Cient - {} and Server - {}",
+    //         stream.peer_addr()?,
+    //         stream.local_addr()?
+    //     );
+    //     handle_connection(stream)?;
+    // }
 
     Ok(())
 }
@@ -93,7 +121,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<()> {
                         "Content-Type: text/html; charset=utf-8
                     \r\n",
                     );
-                    let contents = fs::read_to_string("hello.html")?;
+                    let contents = fs::read_to_string("src/hello.html")?;
                     let length = contents.len();
                     format!("{status}{content_type}Content-Length: {length}\r\n\r\n{contents}")
                 }
@@ -103,7 +131,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<()> {
                         "Content-Type: text/html; charset=utf-8
                     \r\n",
                     );
-                    let contents = fs::read_to_string("404.html")?;
+                    let contents = fs::read_to_string("src/404.html")?;
                     let contents_length = contents.len();
                     format!(
                         "{status}{content_type}Content-Length:{contents_length}\r\n\r\n{contents}"
