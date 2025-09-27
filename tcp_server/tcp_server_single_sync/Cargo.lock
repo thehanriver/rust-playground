@@ -56,7 +56,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tcp_server_single_sync"
+name = "tcp_server"
 version = "0.1.0"
 dependencies = [
  "ctrlc",

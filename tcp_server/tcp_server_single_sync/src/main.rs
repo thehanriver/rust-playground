@@ -1,5 +1,6 @@
 use std::io::{BufRead, BufReader, Result, Write};
 use std::net::{TcpListener, TcpStream};
+use std::path::Path;
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
@@ -123,7 +124,8 @@ fn handle_connection(mut stream: TcpStream) -> Result<()> {
                         "Content-Type: text/html; charset=utf-8
                     \r\n",
                     );
-                    let contents = fs::read_to_string("src/hello.html")?;
+                    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/hello.html");
+                    let contents = fs::read_to_string(path)?;
                     let length = contents.len();
                     format!("{status}{content_type}Content-Length: {length}\r\n\r\n{contents}")
                 }
@@ -133,7 +135,8 @@ fn handle_connection(mut stream: TcpStream) -> Result<()> {
                         "Content-Type: text/html; charset=utf-8
                     \r\n",
                     );
-                    let contents = fs::read_to_string("src/404.html")?;
+                    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/404.html");
+                    let contents = fs::read_to_string(path)?;
                     let contents_length = contents.len();
                     format!(
                         "{status}{content_type}Content-Length:{contents_length}\r\n\r\n{contents}"
