@@ -1,2 +1,4 @@
 /tcp_server/tcp_server_single_sync/target
+/tcp_server/tcp_server_pool_sync/target
+/tcp_server/tcp_server_async/target
 /tcp_server/target

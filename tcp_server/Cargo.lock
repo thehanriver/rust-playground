@@ -56,6 +56,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcp_server_async"
+version = "0.1.0"
+
+[[package]]
 name = "tcp_server_pool_sync"
 version = "0.1.0"
 dependencies = [
